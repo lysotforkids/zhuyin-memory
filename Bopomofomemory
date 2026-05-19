@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注音符號語音記憶遊戲 - 職能治療專業特訓版</title>
+    <!-- 使用 Tailwind CSS 打造現代化且高質感的介面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts 中文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #fef08a 0%, #fbcfe8 100%);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* 3D 翻牌專用樣式 */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .card-active {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 flex flex-col items-center justify-between text-slate-800">
+
+    <div class="w-full flex-grow flex flex-col items-center justify-start">
+        <header class="text-center mb-5 max-w-2xl w-full">
+            <h1 class="text-3xl md:text-4xl font-black text-pink-600 drop-shadow-sm flex items-center justify-center gap-2">
+                🎈 注音語音記憶特訓遊戲 🗣️
+            </h1>
+            <p class="text-slate-600 mt-2 text-xs md:text-sm font-bold">
+                結合聲母、介韻母、結合韻與聲調，專為需要學習注音的兒童設計。
+            </p>
+        </header>
+
+        <!-- 主區塊：切換式畫面 -->
+        <main class="w-full max-w-4xl">
+            
+            <!-- 畫面一：設定首頁 -->
+            <section id="screen-setup" class="bg-white/90 backdrop-blur-sm p-5 md:p-6 rounded-3xl shadow-xl border-4 border-white flex flex-col gap-4 max-w-2xl mx-auto transition-all duration-300">
+                <h2 class="text-lg md:text-xl font-black text-pink-500 border-b-2 border-pink-100 pb-2 flex items-center gap-2">
+                    ⚙️ 第一步：選擇今天的學習與遊戲內容
+                </h2>
+
+                <!-- 2. 選擇注音範圍與分類 -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-black text-slate-700">1. 選取特訓注音與聲調範圍：</label>
+                        <span id="selected-count" class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-black">
+                            已選 0 個
+                        </span>
+                    </div>
+                    
+                    <!-- 快速選取按鈕（已升級為單一類別一鍵全選，確保互斥） -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 mb-3">
+                        <button onclick="quickSelect('none')" class="text-[11px] py-1.5 px-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 font-bold rounded-xl transition-all active:scale-95">
+                            ❌ 一鍵清空
+                        </button>
+                        <button onclick="quickSelect('consonants')" class="text-[11px] py-1.5 px-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 font-bold rounded-xl transition-all active:scale-95">
+                            🔵 全選聲母
+                        </button>
+                        <button onclick="quickSelect('vowels-only')" class="text-[11px] py-1.5 px-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-600 font-bold rounded-xl transition-all active:scale-95">
+                            🟢 全選介韻母
+                        </button>
+                        <button onclick="quickSelect('combined-only')" class="text-[11px] py-1.5 px-1 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-600 font-bold rounded-xl transition-all active:scale-95">
+                            🟣 全選結合韻
+                        </button>
+                        <button onclick="quickSelect('only-tones')" class="text-[11px] py-1.5 px-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-600 font-bold rounded-xl transition-all active:scale-95 col-span-2 sm:col-span-1">
+                            🟠 全選聲調
+                        </button>
+                    </div>
+
+                    <!-- 手動勾選滾動區 -->
+                    <div class="border-2 border-slate-100 rounded-2xl p-3 bg-slate-50 max-h-72 overflow-y-auto shadow-inner space-y-4">
+                        <!-- 聲母區 -->
+                        <div>
+                            <div class="text-xs font-black text-blue-500 mb-2 border-b border-blue-100 pb-1 flex justify-between">
+                                <span>🔵 聲母 (21個)</span>
+                                <button onclick="quickSelect('only-consonants')" class="text-[10px] text-blue-400 hover:text-blue-600">只選此區</button>
+                            </div>
+                            <div class="grid grid-cols-4 sm:grid-cols-5 gap-1.5" id="consonants-container"></div>
+                        </div>
+                        <!-- 介母與韻母區 -->
+                        <div>
+                            <div class="text-xs font-black text-emerald-500 mb-2 border-b border-emerald-100 pb-1 flex justify-between">
+                                <span>🟢 介母與韻母 (16個)</span>
+                                <button onclick="quickSelect('only-vowels')" class="text-[10px] text-emerald-400 hover:text-emerald-600">只選此區</button>
+                            </div>
+                            <div class="grid grid-cols-4 sm:grid-cols-5 gap-1.5" id="vowels-container"></div>
+                        </div>
+                        <!-- 結合韻區 -->
+                        <div>
+                            <div class="text-xs font-black text-purple-500 mb-2 border-b border-purple-100 pb-1 flex justify-between">
+                                <span>🟣 結合韻 (精選低年級常用 14個)</span>
+                                <button onclick="quickSelect('only-combined')" class="text-[10px] text-purple-400 hover:text-purple-600">只選此區</button>
+                            </div>
+                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5" id="combined-container"></div>
+                        </div>
+                        <!-- 聲調區 -->
+                        <div>
+                            <div class="text-xs font-black text-amber-600 mb-1 border-b border-amber-100 pb-1 flex justify-between">
+                                <span>🟠 聲調練習 (5個)</span>
+                                <button onclick="quickSelect('only-tones')" class="text-[10px] text-amber-500 hover:text-amber-700">只選此區</button>
+                            </div>
+                            <!-- 聲調提醒說明 -->
+                            <div class="text-[11px] bg-amber-50 border border-amber-200 text-amber-700 rounded-xl p-2.5 mb-2 font-bold leading-relaxed shadow-sm">
+                                🔒 聲調練習為 <span class="text-pink-600">獨立練習模式</span>：<br>
+                                勾選聲調時會自動清空聲母、介韻母與結合韻，不混在一起練習，避免孩子混淆！<br>
+                                <span class="text-slate-500">（💡 貼心提醒：請注意看注音中標註 <strong class="text-pink-600">【 】</strong> 的地方喔！例如：『【ㄒㄧㄠˇ】 ㄍㄡˇ』配對三聲，『ㄅㄚˋ 【ㄅㄚ˙】』配對輕聲）</span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="tones-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. 選擇遊戲牌數 (自訂 Slider) -->
+                <div class="bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100/80">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-sm font-black text-slate-700 flex items-center gap-1">🎴 2. 決定遊戲對數（自訂牌數）：</label>
+                        <span id="difficulty-val-display" class="text-base bg-rose-500 text-white px-3 py-0.5 rounded-full font-black">
+                            6 對 (12張)
+                        </span>
+                    </div>
+                    <input type="range" id="difficulty-slider" min="2" max="12" value="6" oninput="handleSliderChange(this.value)" class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500 mt-2">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-bold mt-1">
+                        <span>最少 2 對</span>
+                        <span id="slider-max-hint">最多 12 對</span>
+                    </div>
+                </div>
+
+                <!-- 貼心遊戲自訂選項（新增國字開關與音訊控制） -->
+                <div class="bg-violet-50/30 p-3.5 rounded-2xl border border-violet-100/80 flex flex-col gap-3">
+                    <label class="text-sm font-black text-slate-700">⚙️ 3. 卡片與聲音設定：</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <!-- 國字顯示切換 -->
+                        <button id="hanzi-toggle" onclick="toggleHanzi()" class="bg-pink-100 hover:bg-pink-200 text-pink-700 font-extrabold py-2.5 px-3 rounded-xl border border-pink-200 text-xs transition-all flex flex-col items-center justify-center gap-1">
+                            <span>✍️ 卡片國字</span>
+                            <span id="hanzi-status" class="text-[10px] opacity-90 bg-pink-500 text-white px-2 py-0.5 rounded-full font-bold">顯示中</span>
+                        </button>
+                        <!-- 語音發音切換 -->
+                        <button id="voice-toggle" onclick="toggleVoice()" class="bg-violet-100 hover:bg-violet-200 text-violet-700 font-extrabold py-2.5 px-3 rounded-xl border border-violet-200 text-xs transition-all flex flex-col items-center justify-center gap-1">
+                            <span>🗣️ 語音發音 (TTS)</span>
+                            <span id="voice-status" class="text-[10px] opacity-90 bg-violet-500 text-white px-2 py-0.5 rounded-full font-bold">開啟中</span>
+                        </button>
+                        <!-- 遊戲音效切換 -->
+                        <button id="sound-toggle" onclick="toggleSound()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-extrabold py-2.5 px-3 rounded-xl border border-amber-200 text-xs transition-all flex flex-col items-center justify-center gap-1">
+                            <span>🔊 遊戲音效 (啵啵聲)</span>
+                            <span id="sound-status" class="text-[10px] opacity-90 bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold">開啟中</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 警示語旗標 (無選取任何注音時顯示) -->
+                <div id="warning-banner" class="hidden text-xs bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-xl font-bold text-center animate-pulse">
+                    ⚠️ 請至少勾選 2 個以上的項目才能開始遊戲喔！
+                </div>
+
+                <!-- 進入遊戲大型動作按鈕 -->
+                <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 hover:opacity-95 text-white font-black text-lg rounded-2xl shadow-lg shadow-pink-200 flex items-center justify-center gap-2 transition-all active:scale-95">
+                    🚀 設定完成，進入特訓遊戲！
+                </button>
+            </section>
+
+            <!-- 畫面二：遊戲主畫面 (預設隱藏) -->
+            <section id="screen-game" class="hidden w-full flex-col gap-3 animate-fadeIn">
+                
+                <!-- 上方控制區（已新增重新開始、暫停按鍵） -->
+                <div class="flex flex-wrap gap-2 justify-between items-center bg-white/95 backdrop-blur-sm p-3.5 rounded-2xl shadow-md border-2 border-white">
+                    <div class="flex items-center gap-2">
+                        <button onclick="abortGame()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-2 px-3 rounded-xl border border-slate-200 transition-all flex items-center gap-1">
+                            🚪 回首頁
+                        </button>
+                        <button id="btn-restart" onclick="restartCurrentGame()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold text-xs py-2 px-3 rounded-xl border border-rose-200 transition-all flex items-center gap-1">
+                            🔄 重新開始
+                        </button>
+                        <button id="btn-pause" onclick="togglePauseGame()" class="bg-amber-50 hover:bg-amber-100 text-amber-600 font-extrabold text-xs py-2 px-3 rounded-xl border border-amber-200 transition-all flex items-center gap-1">
+                            ⏸️ 暫停遊戲
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="timer-display" class="bg-amber-100 text-amber-700 px-3 py-1 rounded-xl text-xs font-black">⏱️ 時間: 0秒</span>
+                    </div>
+                </div>
+
+                <!-- 計分板 -->
+                <div class="bg-white/90 backdrop-blur-sm p-3.5 rounded-2xl shadow-md border-2 border-white flex justify-around items-center text-xs md:text-sm font-extrabold text-slate-700">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-base">👀</span>
+                        <span>翻牌次數：<span id="flips" class="text-pink-500 text-lg font-black">0</span> 次</span>
+                    </div>
+                    <div class="h-5 w-0.5 bg-slate-200"></div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-base">⭐</span>
+                        <span>配對成功：<span id="matches" class="text-emerald-500 text-lg font-black">0</span> / <span id="total-pairs" class="text-slate-800">0</span> 對</span>
+                    </div>
+                </div>
+
+                <!-- 卡牌容器 -->
+                <div class="relative w-full">
+                    <div id="board" class="grid gap-2.5 w-full perspective-1000 my-1">
+                        <!-- 由 JavaScript 動態生成卡片 -->
+                    </div>
+                    
+                    <!-- 暫停遮蓋面板（防止暫停時偷看卡片） -->
+                    <div id="pause-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm rounded-3xl hidden flex-col items-center justify-center text-white z-20 gap-4 transition-all duration-300">
+                        <span class="text-5xl animate-pulse">⏸️</span>
+                        <h3 class="text-2xl font-black">遊戲暫停中</h3>
+                        <p class="text-xs text-slate-300 font-medium">大腦休息一下下，準備好再繼續喔！</p>
+                        <button onclick="togglePauseGame()" class="py-3 px-8 bg-gradient-to-r from-pink-500 to-rose-500 hover:opacity-95 text-white font-black rounded-full shadow-lg text-sm active:scale-95 transition-all">
+                            ▶️ 繼續遊戲
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 頁尾設計師資訊卡 -->
+    <footer class="w-full max-w-2xl text-center mt-6 pb-2">
+        <div class="inline-flex flex-wrap items-center justify-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-pink-100/50 shadow-sm text-xs text-slate-600 font-bold">
+            <span>🎨 遊戲設計：</span>
+            <span class="text-pink-600 font-extrabold">李宜禧 職能治療師</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-violet-600 hover:underline">
+                <a href="https://www.instagram.com/lys_otforkids" target="_blank" rel="noopener noreferrer">📷 IG: lys_otforkids</a>
+            </span>
+        </div>
+    </footer>
+
+    <!-- 結算/獎勵彈窗 -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border-4 border-pink-400 text-center shadow-2xl scale-95 transition-transform duration-300">
+            <span id="reward-emoji" class="text-6xl animate-bounce inline-block mb-3">🏆</span>
+            <h3 id="reward-title" class="text-2xl font-black text-pink-600">你太優秀了！</h3>
+            
+            <p id="reward-phrase" class="text-slate-700 mt-2.5 font-bold px-3 text-sm md:text-base text-center leading-relaxed font-semibold">
+                所有的注音都被你成功記起來囉！
+            </p>
+            
+            <!-- 數據統計板 -->
+            <div class="my-4 bg-pink-50 rounded-2xl p-4 border border-pink-100 text-left flex flex-col gap-2">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>🎯 配對得分：</span>
+                    <span class="text-pink-600" id="stat-score">0 / 0 對</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>👀 翻牌次數：</span>
+                    <span class="text-pink-600" id="stat-flips">0 次</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>⏱️ 挑戰時間：</span>
+                    <span class="text-pink-600" id="stat-time">0 秒</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>⭐ 翻牌準確度：</span>
+                    <span class="text-emerald-600 font-extrabold" id="stat-accuracy">100%</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button onclick="startGame()" class="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-black rounded-xl shadow-lg transition-all active:scale-95 text-sm">
+                    🎉 再挑戰一場！
+                </button>
+                <button onclick="backToSetup()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-xl transition-all active:scale-95 text-xs border border-slate-200">
+                    ⚙️ 回首頁重新選範圍
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 粒子特效容器 -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-40 overflow-hidden"></div>
+
+    <script>
+        // 設定狀態
+        let showHanzi = true;      // 是否顯示國字
+        let voiceEnabled = true;   // 是否開啟語音發音
+        let soundEnabled = true;   // 是否開啟遊戲音效
+        let audioCtx = null;
+        let isPaused = false;      // 是否處於暫停狀態
+
+        // 初始化 Web Audio API
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // 撥放內建合成音效（可愛卡通風格）
+        function playBeep(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'flip') {
+                // 超可愛的啵啵球（Bubble Pop）音效
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, now);
+                osc.frequency.exponentialRampToValueAtTime(1400, now + 0.08);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'success') {
+                // 亮晶晶的配對成功魔法聲
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.07); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.14); // G5
+                osc.frequency.setValueAtTime(1046.5, now + 0.21); // C6
+                osc.frequency.setValueAtTime(1318.5, now + 0.28); // E6
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.005, now + 0.45);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } else if (type === 'fail') {
+                // 卡通風格的「矮油」下滑音
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.linearRampToValueAtTime(140, now + 0.28);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+                osc.start(now);
+                osc.stop(now + 0.28);
+            } else if (type === 'win') {
+                // 歡樂過關短樂章
+                const notes = [523.25, 659.25, 587.33, 698.46, 659.25, 783.99, 880.00, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    g.gain.setValueAtTime(0.12, now + idx * 0.08);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    o.start(now + idx * 0.08);
+                    o.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+        }
+
+        // 過濾多餘標點符號/形狀，避免朗讀出亂碼
+        function cleanSpeechText(text) {
+            if (!text) return '';
+            // 移除非中文字、非注音、非英數，排除特殊符號與括號（包含視覺定位的【】括號）
+            return text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9ㄅ-ㄦˊˇˋ˙]/g, '').trim();
+        }
+
+        // 中文語音導讀 (精準鎖定台灣中文並調校音調)
+        function speak(text) {
+            if (!voiceEnabled) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                
+                const cleanedText = cleanSpeechText(text);
+                if (!cleanedText) return;
+
+                const utterance = new SpeechSynthesisUtterance(cleanedText);
+                
+                // 尋找標準台灣發音 (zh-TW)
+                const voices = window.speechSynthesis.getVoices();
+                const twVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('zh_TW'));
+                if (twVoice) {
+                    utterance.voice = twVoice;
+                }
+                
+                utterance.lang = 'zh-TW';
+                utterance.rate = 1.0; // 順暢標準台灣人自然語速
+                utterance.pitch = 1.15; // 稍微高亢有親切感的兒童指導音調
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 切換國字顯示開關
+        function toggleHanzi() {
+            showHanzi = !showHanzi;
+            const statusEl = document.getElementById('hanzi-status');
+            const toggleBtn = document.getElementById('hanzi-toggle');
+            if (showHanzi) {
+                statusEl.textContent = '顯示中';
+                statusEl.className = "text-[10px] opacity-90 bg-pink-500 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-pink-100 hover:bg-pink-200 text-pink-700 font-extrabold py-2.5 px-3 rounded-xl border border-pink-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+                speak('顯示國字');
+            } else {
+                statusEl.textContent = '隱藏中';
+                statusEl.className = "text-[10px] opacity-90 bg-slate-500 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold py-2.5 px-3 rounded-xl border border-slate-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+                speak('隱藏國字');
+            }
+        }
+
+        // 切換語音發音開關
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const statusEl = document.getElementById('voice-status');
+            const toggleBtn = document.getElementById('voice-toggle');
+            if (voiceEnabled) {
+                statusEl.textContent = '開啟中';
+                statusEl.className = "text-[10px] opacity-90 bg-violet-500 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-violet-100 hover:bg-violet-200 text-violet-700 font-extrabold py-2.5 px-3 rounded-xl border border-violet-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+                speak('語音開啟');
+            } else {
+                statusEl.textContent = '關閉中';
+                statusEl.className = "text-[10px] opacity-90 bg-slate-500 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold py-2.5 px-3 rounded-xl border border-slate-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+            }
+        }
+
+        // 切換遊戲音效開關
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const statusEl = document.getElementById('sound-status');
+            const toggleBtn = document.getElementById('sound-toggle');
+            if (soundEnabled) {
+                statusEl.textContent = '開啟中';
+                statusEl.className = "text-[10px] opacity-90 bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-amber-100 hover:bg-amber-200 text-amber-700 font-extrabold py-2.5 px-3 rounded-xl border border-amber-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+                playBeep('success');
+            } else {
+                statusEl.textContent = '關閉中';
+                statusEl.className = "text-[10px] opacity-90 bg-slate-500 text-white px-2 py-0.5 rounded-full font-bold";
+                toggleBtn.className = "bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold py-2.5 px-3 rounded-xl border border-slate-200 text-xs transition-all flex flex-col items-center justify-center gap-1";
+            }
+        }
+
+        // 國小1-2年級多樣化詞彙資料庫 (教育部國語注音、聲調精確校正版)
+        // 聲調模組改寫：「【 】」精確框在「注音符號」對應的音節上！
+        const zhuyinDatabase = [
+            // === 聲母 (21個) ===
+            { 
+                id: 'b1', symbol: 'ㄅ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🍎', zhuyin: 'ㄅㄚ ㄌㄜˋ', hanzi: '芭樂' },
+                    { emoji: '👨', zhuyin: 'ㄅㄚˋ ㄅㄚ˙', hanzi: '爸爸' },
+                    { emoji: '🚌', zhuyin: 'ㄅㄚ ㄕˋ', hanzi: '巴士' }
+                ]
+            },
+            { 
+                id: 'b2', symbol: 'ㄆ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🍇', zhuyin: 'ㄆㄨˊ ㄊㄠˊ', hanzi: '葡萄' },
+                    { emoji: '🏃', zhuyin: 'ㄆㄠˇ ㄅㄨˋ', hanzi: '跑步' },
+                    { emoji: '🧗', zhuyin: 'ㄆㄚˊ ㄕㄢ', hanzi: '爬山' }
+                ]
+            },
+            { 
+                id: 'b3', symbol: 'ㄇ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🐱', zhuyin: 'ㄇㄠ ㄇㄧ', hanzi: '貓咪' },
+                    { emoji: '🍞', zhuyin: 'ㄇㄧㄢˋ ㄅㄠ', hanzi: '麵包' },
+                    { emoji: '🎩', zhuyin: 'ㄇㄠˋ ㄗ˙', hanzi: '帽子' }
+                ]
+            },
+            { 
+                id: 'b4', symbol: 'ㄈ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🪁', zhuyin: 'ㄈㄟ ㄐㄧ', hanzi: '飛機' },
+                    { emoji: '🌀', zhuyin: 'ㄈㄥ ㄕㄢˋ', hanzi: '風扇' },
+                    { emoji: '🪁', zhuyin: 'ㄈㄥ ㄗㄥ', hanzi: '風箏' }
+                ]
+            },
+            { 
+                id: 'b5', symbol: 'ㄉ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '💻', zhuyin: 'ㄉㄧㄢˋ ㄋㄠˇ', hanzi: '電腦' },
+                    { emoji: '🍰', zhuyin: 'ㄉㄢˋ ㄍㄠ', hanzi: '蛋糕' },
+                    { emoji: '🗺️', zhuyin: 'ㄉㄧˋ ㄊㄨˊ', hanzi: '地圖' }
+                ]
+            },
+            { 
+                id: 'b6', symbol: 'ㄊ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '☀️', zhuyin: 'ㄊㄞˋ ㄧㄤˊ', hanzi: '太陽' },
+                    { emoji: '🐰', zhuyin: 'ㄊㄨˋ ㄗ˙', hanzi: '兔子' },
+                    { emoji: '🍩', zhuyin: 'ㄊㄧㄢˊ ㄊㄧㄢˊ ㄑㄩㄢ', hanzi: '甜甜圈' }
+                ]
+            },
+            { 
+                id: 'b7', symbol: 'ㄋ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🥛', zhuyin: 'ㄋㄧㄡˊ ㄋㄞˇ', hanzi: '牛奶' },
+                    { emoji: '🥩', zhuyin: 'ㄋㄧㄡˊ ㄖㄡˋ', hanzi: '牛肉' },
+                    { emoji: '🌱', zhuyin: 'ㄋㄧˊ ㄊㄨˇ', hanzi: '泥土' }
+                ]
+            },
+            { 
+                id: 'b8', symbol: 'ㄌ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🔔', zhuyin: 'ㄌㄧㄥˊ ㄉㄤ', hanzi: '鈴鐺' },
+                    { emoji: '🌶️', zhuyin: 'ㄌㄚˋ ㄐㄧㄠ', hanzi: '辣椒' },
+                    { emoji: '🔵', zhuyin: 'ㄌㄢˊ ㄙㄜˋ', hanzi: '藍色' }
+                ]
+            },
+            { 
+                id: 'b9', symbol: 'ㄍ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '⛲', zhuyin: 'ㄍㄨㄥ ㄩㄢˊ', hanzi: '公園' },
+                    { emoji: '🚌', zhuyin: 'ㄍㄨㄥ ㄔㄜ', hanzi: '公車' },
+                    { emoji: '👦', zhuyin: 'ㄍㄜ ㄍㄜ˙', hanzi: '哥哥' }
+                ]
+            },
+            { 
+                id: 'b10', symbol: 'ㄎ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🦖', zhuyin: 'ㄎㄨㄥˇ ㄌㄨㄥˊ', hanzi: '恐龍' },
+                    { emoji: '😢', zhuyin: 'ㄎㄨ ㄑㄧˋ', hanzi: '哭泣' },
+                    { emoji: '👖', zhuyin: 'ㄎㄨˋ ㄗ˙', hanzi: '褲子' }
+                ]
+            },
+            { 
+                id: 'b11', symbol: 'ㄏ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🦋', zhuyin: 'ㄏㄨˊ ㄉㄧㄝˊ', hanzi: '蝴蝶' },
+                    { emoji: '🌸', zhuyin: 'ㄏㄨㄚ ㄉㄨㄛˇ', hanzi: '花朵' },
+                    { emoji: '🚂', zhuyin: 'ㄏㄨㄛˇ ㄔㄜ', hanzi: '火車' }
+                ]
+            },
+            { 
+                id: 'b12', symbol: 'ㄐ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🏆', zhuyin: 'ㄐㄧㄤˇ ㄆㄞˊ', hanzi: '獎牌' },
+                    { emoji: '🧱', zhuyin: 'ㄐㄧ ㄇㄨˋ', hanzi: '積木' },
+                    { emoji: '🥚', zhuyin: 'ㄐㄧ ㄉㄢˋ', hanzi: '雞蛋' }
+                ]
+            },
+            { 
+                id: 'b13', symbol: 'ㄑ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🎈', zhuyin: 'ㄑㄧˋ ㄑㄧㄡˊ', hanzi: '氣球' },
+                    { emoji: '🚗', zhuyin: 'ㄑㄧˋ ㄔㄜ', hanzi: '汽車' },
+                    { emoji: '🐸', zhuyin: 'ㄑㄧㄥ ㄨㄚ', hanzi: '青蛙' }
+                ]
+            },
+            { 
+                id: 'b14', symbol: 'ㄒ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🍉', zhuyin: 'ㄒㄧ ㄍㄨㄚ', hanzi: '西瓜' },
+                    { emoji: '🧼', zhuyin: 'ㄒㄧˇ ㄕㄡˇ', hanzi: '洗手' },
+                    { emoji: '🍌', zhuyin: 'ㄒㄧㄤ ㄐㄧㄠ', hanzi: '香蕉' }
+                ]
+            },
+            { 
+                id: 'b15', symbol: 'ㄓ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '💎', zhuyin: 'ㄓㄨ ㄅㄠˇ', hanzi: '珠寶' },
+                    { emoji: '🕷️', zhuyin: 'ㄓ ㄓㄨ', hanzi: '蜘蛛' },
+                    { emoji: '💉', zhuyin: 'ㄓㄣ ㄊㄨㄥˇ', hanzi: '針筒' }
+                ]
+            },
+            { 
+                id: 'b16', symbol: 'ㄔ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🎤', zhuyin: 'ㄔㄤˋ ㄍㄜ', hanzi: '唱歌' },
+                    { emoji: '⚙️', zhuyin: 'ㄔˇ ㄌㄨㄣˊ', hanzi: '齒輪' }, 
+                    { emoji: '🪶', zhuyin: 'ㄔˋ ㄅㄤˇ', hanzi: '翅膀' }
+                ]
+            },
+            { 
+                id: 'b17', symbol: 'ㄕ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🎒', zhuyin: 'ㄕㄨ ㄅㄠ', hanzi: '書包' },
+                    { emoji: '⌚', zhuyin: 'ㄕㄡˇ ㄅㄧㄠˇ', hanzi: '手錶' }, 
+                    { emoji: '🦁', zhuyin: 'ㄕ ㄗ˙', hanzi: '獅子' }
+                ]
+            },
+            { 
+                id: 'b18', symbol: 'ㄖ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '✏️', zhuyin: 'ㄖㄣˋ ㄓㄣ', hanzi: '認真' },
+                    { emoji: '🌅', zhuyin: 'ㄖˋ ㄔㄨ', hanzi: '日出' },
+                    { emoji: '♨️', zhuyin: 'ㄖㄜˋ ㄕㄨㄟˇ', hanzi: '熱水' }
+                ]
+            },
+            { 
+                id: 'b19', symbol: 'ㄗ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '📝', zhuyin: 'ㄗㄨㄛˋ ㄧㄝˋ', hanzi: '作業' },
+                    { emoji: '🟣', zhuyin: 'ㄗˇ ㄙㄜˋ', hanzi: '紫色' },
+                    { emoji: '🚲', zhuyin: 'ㄗˋ ㄒㄧㄥˊ ㄔㄜ', hanzi: '自行車' }
+                ]
+            },
+            { 
+                id: 'b20', symbol: 'ㄘ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '💡', zhuyin: 'ㄘㄨㄥ ㄇㄧㄥˊ', hanzi: '聰明' },
+                    { emoji: '🍓', zhuyin: 'ㄘㄠˇ ㄇㄟˊ', hanzi: '草莓' },
+                    { emoji: '🌈', zhuyin: 'ㄘㄞˇ ㄏㄨㄥˊ', hanzi: '彩虹' }
+                ]
+            },
+            { 
+                id: 'b21', symbol: 'ㄙ', group: 'consonant', 
+                vocabs: [
+                    { emoji: '🌲', zhuyin: 'ㄙㄣ ㄌㄧㄣˊ', hanzi: '森林' },
+                    { emoji: '🧑‍✈️', zhuyin: 'ㄙ ㄐㄧ', hanzi: '司機' },
+                    { emoji: '🧣', zhuyin: 'ㄙ ㄐㄧㄣ', hanzi: '絲巾' }
+                ]
+            },
+            
+            // === 介母與韻母 (16個) ===
+            { 
+                id: 'v1', symbol: 'ㄧ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '👨‍⚕️', zhuyin: 'ㄧ ㄕㄥ', hanzi: '醫生' },
+                    { emoji: '👕', zhuyin: 'ㄧ ㄈㄨˊ', hanzi: '衣服' },
+                    { emoji: '🪑', zhuyin: 'ㄧˇ ㄗ˙', hanzi: '椅子' }
+                ]
+            },
+            { 
+                id: 'v2', symbol: 'ㄨ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🐢', zhuyin: 'ㄨ ㄍㄨㄟ', hanzi: '烏龜' },
+                    { emoji: '🧸', zhuyin: 'ㄨㄢˊ ㄐㄩˋ', hanzi: '玩具' },
+                    { emoji: '🧦', zhuyin: 'ㄨㄚˋ ㄗ˙', hanzi: '襪子' }
+                ]
+            },
+            { 
+                id: 'v3', symbol: 'ㄩ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🎣', zhuyin: 'ㄩˊ ㄍㄢ', hanzi: '魚竿' },
+                    { emoji: '☂️', zhuyin: 'ㄩˇ ㄙㄢˇ', hanzi: '雨傘' },
+                    { emoji: '🌽', zhuyin: 'ㄩˋ ㄇㄧˇ', hanzi: '玉米' }
+                ]
+            },
+            { 
+                id: 'v4', symbol: 'ㄚ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '👩', zhuyin: 'ㄚ ㄧˊ', hanzi: '阿姨' },
+                    { emoji: '📯', zhuyin: 'ㄌㄚˇ ㄅㄚ˙', hanzi: '喇叭' },
+                    { emoji: '🍈', zhuyin: 'ㄏㄚ ㄇㄧˋ ㄍㄨㄚ', hanzi: '哈密瓜' }
+                ]
+            },
+            { 
+                id: 'v5', symbol: 'ㄛ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🥛', zhuyin: 'ㄅㄛ ㄌㄧˊ ㄅㄟ', hanzi: '玻璃杯' },
+                    { emoji: '🥬', zhuyin: 'ㄅㄛ ㄘㄞˋ', hanzi: '菠菜' },
+                    { emoji: '👵', zhuyin: 'ㄆㄛˊ ㄆㄛ˙', hanzi: '婆婆' }
+                ]
+            },
+            { 
+                id: 'v6', symbol: 'ㄜ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🦢', zhuyin: 'ㄊㄧㄢ ㄜˊ', hanzi: '天鵝' },
+                    { emoji: '😈', zhuyin: 'ㄜˋ ㄇㄛˊ', hanzi: '惡魔' },
+                    { emoji: '🤤', zhuyin: 'ㄉㄨˋ ㄗ˙ ㄜˋ', hanzi: '肚子餓' }
+                ]
+            },
+            { 
+                id: 'v7', symbol: 'ㄝ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🥥', zhuyin: 'ㄧㄝˊ ㄗ˙', hanzi: '椰子' },
+                    { emoji: '👴', zhuyin: 'ㄧㄝˊ ㄧㄝ˙', hanzi: '爺爺' },
+                    { emoji: '🍃', zhuyin: 'ㄕㄨˋ ㄧㄝˋ', hanzi: '樹葉' }
+                ]
+            },
+            { 
+                id: 'v8', symbol: 'ㄞ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '💖', zhuyin: 'ㄞˋ ㄒㄧㄣ', hanzi: '愛心' },
+                    { emoji: '📉', zhuyin: 'ㄞˇ ㄒㄧㄠˇ', hanzi: '矮小' },
+                    { emoji: '🧋', zhuyin: 'ㄋㄞˇ ㄔㄚˊ', hanzi: '奶茶' }
+                ]
+            },
+            { 
+                id: 'v9', symbol: 'ㄟ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🐚', zhuyin: 'ㄅㄟˋ ㄎㄜˊ', hanzi: '貝殼' },
+                    { emoji: '✈️', zhuyin: 'ㄈㄟ ㄐㄧ', hanzi: '飛機' },
+                    { emoji: '🥱', zhuyin: 'ㄌㄟˋ ㄌㄜ˙', hanzi: '累了' }
+                ]
+            },
+            { 
+                id: 'v10', symbol: 'ㄠ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🖌️', zhuyin: 'ㄇㄠˊ ㄅㄧˇ', hanzi: '毛筆' },
+                    { emoji: '🐈', zhuyin: 'ㄇㄠ ㄇㄧ', hanzi: '貓咪' },
+                    { emoji: '🎒', zhuyin: 'ㄕㄨ ㄅㄠ', hanzi: '書包' }
+                ]
+            },
+            { 
+                id: 'v11', symbol: 'ㄡ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🐵', zhuyin: 'ㄏㄡˊ ㄗ˙', hanzi: '猴子' },
+                    { emoji: '🐕', zhuyin: 'ㄒㄧㄠˇ ㄍㄡˇ', hanzi: '小狗' },
+                    { emoji: '🔘', zhuyin: 'ㄋㄧㄡˇ ㄎㄡˋ', hanzi: '紐扣' }
+                ]
+            },
+            { 
+                id: 'v12', symbol: 'ㄢ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '⛑️', zhuyin: 'ㄢ ㄑㄩㄢˊ ㄇㄠˋ', hanzi: '安全帽' },
+                    { emoji: '🐐', zhuyin: 'ㄕㄢ ㄧㄤˊ', hanzi: '山羊' },
+                    { emoji: '👕', zhuyin: 'ㄔㄣˋ ㄕㄢ', hanzi: '襯衫' }
+                ]
+            },
+            { 
+                id: 'v13', symbol: 'ㄣ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🙏', zhuyin: 'ㄍㄢˇ ㄣ', hanzi: '感恩' },
+                    { emoji: '🌲', zhuyin: 'ㄙㄣ ㄌㄧㄣˊ', hanzi: '森林' },
+                    { emoji: '💪', zhuyin: 'ㄕㄣ ㄊㄧˇ', hanzi: '身體' }
+                ]
+            },
+            { 
+                id: 'v14', symbol: 'ㄤ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🦀', zhuyin: 'ㄅㄤˊ ㄒㄧㄝˋ', hanzi: '螃蟹' },
+                    { emoji: '🤝', zhuyin: 'ㄅㄤ ㄇㄤˊ', hanzi: '幫忙' },
+                    { emoji: '🐻', zhuyin: 'ㄆㄤˋ ㄆㄤˋ ㄉㄜ˙', hanzi: '胖胖的' }
+                ]
+            },
+            { 
+                id: 'v15', symbol: 'ㄥ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🏮', zhuyin: 'ㄉㄥ ㄌㄨㄥˊ', hanzi: '燈籠' },
+                    { emoji: '🪁', zhuyin: 'ㄈㄥ ㄓㄥ', hanzi: '風箏' }, // 經修正：將"ㄈㄥ ㄗ增"修正為標準注音"ㄈㄥ ㄓㄥ"
+                    { emoji: '🔴', zhuyin: 'ㄏㄨㄥˊ ㄙㄜˋ', hanzi: '紅色' }
+                ]
+            },
+            { 
+                id: 'v16', symbol: 'ㄦ', group: 'vowel', 
+                vocabs: [
+                    { emoji: '🎧', zhuyin: 'ㄦˇ ㄐㄧ', hanzi: '耳機' },
+                    { emoji: '👦', zhuyin: 'ㄦˊ ㄗ˙', hanzi: '兒子' },
+                    { emoji: '🌸', zhuyin: 'ㄏㄨㄚ ㄦˊ', hanzi: '花兒' }
+                ]
+            },
+
+            // === 結合韻 (精選常用 14個) ===
+            { 
+                id: 'c1', symbol: 'ㄧㄚ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🦷', zhuyin: 'ㄧㄚˊ ㄔˇ', hanzi: '牙齒' },
+                    { emoji: '🦆', zhuyin: 'ㄧㄚ ㄗ˙', hanzi: '鴨子' }
+                ]
+            },
+            { 
+                id: 'c2', symbol: 'ㄧㄠ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🔑', zhuyin: 'ㄧㄠˋ ㄕ˙', hanzi: '鑰匙' }, 
+                    { emoji: '👹', zhuyin: 'ㄧㄠ ㄍㄨㄞˋ', hanzi: '妖怪' }
+                ]
+            },
+            { 
+                id: 'c3', symbol: 'ㄧㄢ', group: 'combined', 
+                vocabs: [
+                    { emoji: '👓', zhuyin: 'ㄧㄢˇ ㄐㄧㄥˋ', hanzi: '眼鏡' },
+                    { emoji: '✏️', zhuyin: 'ㄑㄧㄢ ㄅㄧˇ', hanzi: '鉛筆' }
+                ]
+            },
+            { 
+                id: 'c4', symbol: 'ㄧㄤ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🧸', zhuyin: 'ㄧㄤˊ ㄨㄚˊ ㄨㄚ˙', hanzi: '洋娃娃' },
+                    { emoji: '☀️', zhuyin: 'ㄊㄞˋ ㄧㄤˊ', hanzi: '太陽' }
+                ]
+            },
+            { 
+                id: 'c5', symbol: 'ㄧㄥ', group: 'combined', 
+                vocabs: [
+                    { emoji: '👤', zhuyin: 'ㄧㄥˇ ㄗ˙', hanzi: '影子' },
+                    { emoji: '🦅', zhuyin: 'ㄌㄠˇ ㄧㄥ', hanzi: '老鷹' }
+                ]
+            },
+            { 
+                id: 'c6', symbol: 'ㄨㄚ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🐸', zhuyin: 'ㄑㄧㄥ ㄨㄚ', hanzi: '青蛙' },
+                    { emoji: '🪆', zhuyin: 'ㄨㄚˊ ㄨㄚ˙', hanzi: '娃娃' }
+                ]
+            },
+            { 
+                id: 'c7', symbol: 'ㄨㄞ', group: 'combined', 
+                vocabs: [
+                    { emoji: '📐', zhuyin: 'ㄨㄞ ㄨㄞ ㄉㄜ˙', hanzi: '歪歪的' },
+                    { emoji: '🧥', zhuyin: 'ㄨㄞˋ ㄊㄠˋ', hanzi: '外套' }
+                ]
+            },
+            { 
+                id: 'c8', symbol: 'ㄨㄟ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🧣', zhuyin: 'ㄨㄟˊ ㄐㄧㄣ', hanzi: '圍巾' },
+                    { emoji: '🐕', zhuyin: 'ㄨㄟˇ ㄅㄚ˙', hanzi: '尾巴' }
+                ]
+            },
+            { 
+                id: 'c9', symbol: 'ㄨㄢ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🧩', zhuyin: 'ㄨㄢˊ ㄐㄩˋ', hanzi: '玩具' },
+                    { emoji: '↩️', zhuyin: 'ㄨㄢ ㄑㄩ', hanzi: '彎曲' }
+                ]
+            },
+            { 
+                id: 'c10', symbol: 'ㄨㄥ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🏮', zhuyin: 'ㄅㄨˋ ㄉㄠˇ ㄨㄥ', hanzi: '不倒翁' },
+                    { emoji: '👑', zhuyin: 'ㄈㄨˋ ㄨㄥ', hanzi: '富翁' }
+                ]
+            },
+            { 
+                id: 'c11', symbol: 'ㄩㄢ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🟢', zhuyin: 'ㄩㄢˊ ㄑㄧㄢ', hanzi: '圓圈' },
+                    { emoji: '🌳', zhuyin: 'ㄆㄧㄥˊ ㄍㄨㄛˇ ㄩㄢˊ', hanzi: '蘋果園' }
+                ]
+            },
+            { 
+                id: 'c12', symbol: 'ㄩㄣ', group: 'combined', 
+                vocabs: [
+                    { emoji: '☁️', zhuyin: 'ㄩㄣˊ ㄉㄨㄛˇ', hanzi: '雲朵' },
+                    { emoji: '🌀', zhuyin: 'ㄊㄡˊ ㄩㄣ', hanzi: '頭暈' }
+                ]
+            },
+            { 
+                id: 'c13', symbol: 'ㄧㄡ', group: 'combined', 
+                vocabs: [
+                    { emoji: '📬', zhuyin: 'ㄧㄡˊ ㄒㄧㄤ', hanzi: '郵箱' },
+                    { emoji: '🎮', zhuyin: 'ㄧㄡˊ ㄒㄧˋ', hanzi: '遊戲' }
+                ]
+            },
+            { 
+                id: 'c14', symbol: 'ㄩㄝ', group: 'combined', 
+                vocabs: [
+                    { emoji: '🌙', zhuyin: 'ㄩㄝˋ ㄌㄧㄤˋ', hanzi: '月亮' },
+                    { emoji: '🎵', zhuyin: 'ㄧㄣ ㄩㄝˋ', hanzi: '音樂' }
+                ]
+            },
+
+            // === 聲調區 (5個) ===
+            // 透過【 】視覺字底定位，精準將「【 】」框在「目標字音節的注音」上！
+            { 
+                id: 't1', symbol: '一聲 (¯)', group: 'tone', 
+                vocabs: [
+                    { emoji: '🥛', zhuyin: '【ㄒㄧㄢ】 ㄋㄞˇ', hanzi: '鮮奶' },
+                    { emoji: '☁️', zhuyin: '【ㄊㄧㄢ】 ㄎㄨㄥ', hanzi: '天空' }
+                ]
+            },
+            { 
+                id: 't2', symbol: '二聲 (ˊ)', group: 'tone', 
+                vocabs: [
+                    { emoji: '🧗', zhuyin: '【ㄆㄚˊ】 ㄕㄢ', hanzi: '爬山' },
+                    { emoji: '🍎', zhuyin: '【ㄆㄧㄥˊ】 ㄍㄨㄛˇ', hanzi: '蘋果' }
+                ]
+            },
+            { 
+                id: 't3', symbol: '三聲 (ˇ)', group: 'tone', 
+                vocabs: [
+                    { emoji: '🐕', zhuyin: '【ㄒㄧㄠˇ】 ㄍㄡˇ', hanzi: '小狗' },
+                    { emoji: '⌚', zhuyin: '【ㄕㄡˇ】 ㄅㄧㄠˇ', hanzi: '手錶' } 
+                ]
+            },
+            { 
+                id: 't4', symbol: '四聲 (ˋ)', group: 'tone', 
+                vocabs: [
+                    { emoji: '⚡', zhuyin: '【ㄉㄧㄢˋ】 ㄌㄧˋ', hanzi: '電力' },
+                    { emoji: '🎤', zhuyin: '【ㄔㄤˋ】 ㄍㄜ', hanzi: '唱歌' }
+                ]
+            },
+            { 
+                id: 't5', symbol: '輕聲 (˙)', group: 'tone', 
+                vocabs: [
+                    { emoji: '👵', zhuyin: 'ㄆㄛˊ 【ㄆㄛ˙】', hanzi: '婆婆' },
+                    { emoji: '👨', zhuyin: 'ㄅㄚˋ 【ㄅㄚ˙】', hanzi: '爸爸' }
+                ]
+            }
+        ];
+
+        let selectedSymbols = new Set(); // 預設空
+        
+        // 為了讓預設狀態合理（預設自動全選聲母分類，並自動觸活動態互斥）
+        zhuyinDatabase.forEach(item => {
+            if (item.group === 'consonant') {
+                selectedSymbols.add(item.id);
+            }
+        });
+
+        let activePairs = [];
+        let cards = [];
+        let flippedCards = [];
+        let lockBoard = false;
+        let flips = 0;
+        let matches = 0;
+
+        // 計時器
+        let gameTimer = null;
+        let gameSeconds = 0;
+
+        // 渲染設置介面的勾選格子
+        function initSelectionPanels() {
+            const consContainer = document.getElementById('consonants-container');
+            const vowelsContainer = document.getElementById('vowels-container');
+            const combContainer = document.getElementById('combined-container');
+            const toneContainer = document.getElementById('tones-container');
+            
+            consContainer.innerHTML = '';
+            vowelsContainer.innerHTML = '';
+            combContainer.innerHTML = '';
+            toneContainer.innerHTML = '';
+
+            zhuyinDatabase.forEach(item => {
+                const label = document.createElement('label');
+                // 調小格子間距並置中，使無字卡像 Mahjong / 積木一塊塊乾淨整齊
+                label.className = `flex flex-col items-center justify-center p-2 rounded-xl border-2 font-black cursor-pointer text-sm transition-all select-none h-11
+                    ${selectedSymbols.has(item.id) 
+                        ? 'bg-pink-500 border-pink-500 text-white shadow-sm' 
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-pink-200'}`;
+                
+                // 完全移除勾選選項下方的預覽文字 (維持最清爽無干擾的純注音按鈕)
+                label.innerHTML = `
+                    <input type="checkbox" value="${item.id}" class="hidden" ${selectedSymbols.has(item.id) ? 'checked' : ''} onchange="toggleSymbolSelection(this, '${item.id}')">
+                    <span class="text-base text-center font-bold leading-tight">${item.symbol}</span>
+                `;
+
+                if (item.group === 'consonant') {
+                    consContainer.appendChild(label);
+                } else if (item.group === 'vowel') {
+                    vowelsContainer.appendChild(label);
+                } else if (item.group === 'combined') {
+                    combContainer.appendChild(label);
+                } else if (item.group === 'tone') {
+                    toneContainer.appendChild(label);
+                }
+            });
+
+            updateSelectedCountText();
+            updateSliderLimit();
+        }
+
+        // 同步所有核取方塊的 UI 樣式
+        function syncCheckboxesUI() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(box => {
+                const id = box.value;
+                const isChecked = selectedSymbols.has(id);
+                box.checked = isChecked;
+                if (isChecked) {
+                    box.parentElement.className = "flex flex-col items-center justify-center p-2 rounded-xl border-2 font-black cursor-pointer text-sm transition-all select-none bg-pink-500 border-pink-500 text-white shadow-sm h-11";
+                } else {
+                    box.parentElement.className = "flex flex-col items-center justify-center p-2 rounded-xl border-2 font-black cursor-pointer text-sm transition-all select-none bg-white border-slate-200 text-slate-700 hover:border-pink-200 h-11";
+                }
+            });
+        }
+
+        // 當個別注音勾選狀態改變時 (四大類別強烈互斥單選邏輯)
+        function toggleSymbolSelection(checkbox, id) {
+            initAudio(); 
+            const clickedItem = zhuyinDatabase.find(d => d.id === id);
+            const clickedGroup = clickedItem.group;
+
+            if (checkbox.checked) {
+                // 強制清除所有「非同類別」的已選項目，達成全互斥
+                selectedSymbols.forEach(selId => {
+                    const selItem = zhuyinDatabase.find(d => d.id === selId);
+                    if (selItem && selItem.group !== clickedGroup) {
+                        selectedSymbols.delete(selId);
+                    }
+                });
+                selectedSymbols.add(id);
+            } else {
+                selectedSymbols.delete(id);
+            }
+
+            syncCheckboxesUI();
+            updateSelectedCountText();
+            updateSliderLimit();
+        }
+
+        // 快速選取與清空邏輯 (完全符合互斥單選機制)
+        function quickSelect(type) {
+            initAudio();
+            selectedSymbols.clear(); // 快速全選某區時，需先清空其他所有分類
+
+            if (type === 'consonants') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'consonant') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'vowels-only') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'vowel') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'combined-only') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'combined') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'only-tones') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'tone') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'only-consonants') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'consonant') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'only-vowels') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'vowel') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'only-combined') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'combined') selectedSymbols.add(item.id);
+                });
+            } else if (type === 'only-tones') {
+                zhuyinDatabase.forEach(item => {
+                    if (item.group === 'tone') selectedSymbols.add(item.id);
+                });
+            }
+
+            syncCheckboxesUI();
+            updateSelectedCountText();
+            updateSliderLimit();
+        }
+
+        function updateSelectedCountText() {
+            const countText = document.getElementById('selected-count');
+            countText.textContent = `已選 ${selectedSymbols.size} 個`;
+
+            const warning = document.getElementById('warning-banner');
+            if (selectedSymbols.size < 2) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
+        }
+
+        // 動態根據選取數量限制 Slider 的最大與最小值
+        function updateSliderLimit() {
+            const slider = document.getElementById('difficulty-slider');
+            const totalSelected = selectedSymbols.size;
+            
+            // 最多配對數不能大於選取的注音符號總數，且最高上限設定為 18 對(36張卡)，避免版面太擠與卡頓
+            const maxPairsPossible = Math.min(totalSelected, 18);
+            
+            if (maxPairsPossible < 2) {
+                slider.disabled = true;
+                slider.min = 0;
+                slider.max = 0;
+                slider.value = 0;
+                document.getElementById('difficulty-val-display').textContent = `0 對 (請多選一些項目)`;
+                document.getElementById('slider-max-hint').textContent = `最多 0 對`;
+                return;
+            }
+
+            slider.disabled = false;
+            slider.min = 2;
+            slider.max = maxPairsPossible;
+            
+            // 如果當前設定值大於可選最大值，自動修正
+            let currentValue = parseInt(slider.value);
+            if (currentValue > maxPairsPossible) {
+                currentValue = maxPairsPossible;
+                slider.value = maxPairsPossible;
+            }
+            if (currentValue < 2) {
+                currentValue = 2;
+                slider.value = 2;
+            }
+
+            document.getElementById('difficulty-val-display').textContent = `${currentValue} 對 (${currentValue * 2}張卡)`;
+            document.getElementById('slider-max-hint').textContent = `最多 ${maxPairsPossible} 對`;
+        }
+
+        function handleSliderChange(val) {
+            initAudio();
+            document.getElementById('difficulty-val-display').textContent = `${val} 對 (${val * 2}張卡)`;
+        }
+
+        // 洗牌演算法
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[j], array[i]] = [array[i], array[j]];
+            }
+            return array;
+        }
+
+        // 依據卡牌總量計算完美的 X * Y 矩形網格欄數
+        function getOptimalColumns(totalCards) {
+            if (totalCards <= 4) return 2; // 2x2
+            if (totalCards === 6) return 3; // 2x3
+            if (totalCards === 8) return 4; // 2x4
+            if (totalCards === 10) return 5; // 2x5
+            if (totalCards === 12) return 4; // 3x4
+            if (totalCards === 14) return 7; // 2x7
+            if (totalCards === 16) return 4; // 4x4
+            if (totalCards === 18) return 6; // 3x6
+            if (totalCards === 20) return 5; // 4x5
+            if (totalCards === 22) return 11; // 2x11
+            if (totalCards === 24) return 6; // 4x6
+            if (totalCards === 26) return 13; // 2x13
+            if (totalCards === 28) return 7; // 4x7
+            if (totalCards === 30) return 6; // 5x6
+            if (totalCards === 32) return 8; // 4x8
+            if (totalCards === 34) return 17; // 2x17
+            if (totalCards === 36) return 6; // 6x6
+            return Math.ceil(Math.sqrt(totalCards));
+        }
+
+        // 計時器控制
+        function startTimer() {
+            clearInterval(gameTimer);
+            gameTimer = setInterval(() => {
+                if (!isPaused) {
+                    gameSeconds++;
+                    document.getElementById('timer-display').textContent = `⏱️ 時間: ${gameSeconds}秒`;
+                }
+            }, 1000);
+        }
+
+        // 暫停計時
+        function stopTimer() {
+            clearInterval(gameTimer);
+        }
+
+        // 暫停 / 繼續 遊戲
+        function togglePauseGame() {
+            initAudio();
+            if (matches === parseInt(document.getElementById('total-pairs').textContent)) {
+                return; // 已通關則不執行暫停
+            }
+            isPaused = !isPaused;
+            const pauseOverlay = document.getElementById('pause-overlay');
+            const pauseBtn = document.getElementById('btn-pause');
+
+            if (isPaused) {
+                // 進入暫停：顯示防看面板、修改按鈕樣式
+                pauseOverlay.classList.remove('hidden');
+                pauseOverlay.classList.add('flex');
+                pauseBtn.textContent = "▶️ 繼續遊戲";
+                pauseBtn.className = "bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-extrabold text-xs py-2 px-3 rounded-xl border border-emerald-200 transition-all flex items-center gap-1";
+                speak('遊戲暫停');
+            } else {
+                // 恢復遊玩：隱藏防看面板、修改按鈕樣式
+                pauseOverlay.classList.add('hidden');
+                pauseOverlay.classList.remove('flex');
+                pauseBtn.textContent = "⏸️ 暫停遊戲";
+                pauseBtn.className = "bg-amber-50 hover:bg-amber-100 text-amber-600 font-extrabold text-xs py-2 px-3 rounded-xl border border-amber-200 transition-all flex items-center gap-1";
+                speak('繼續遊戲');
+            }
+        }
+
+        // 重新開始當前一局（保留當前範圍，重新洗牌、重新動態抽取）
+        function restartCurrentGame() {
+            initAudio();
+            // 確保非暫停狀態
+            isPaused = false;
+            const pauseOverlay = document.getElementById('pause-overlay');
+            pauseOverlay.classList.add('hidden');
+            pauseOverlay.classList.remove('flex');
+            
+            const pauseBtn = document.getElementById('btn-pause');
+            pauseBtn.textContent = "⏸️ 暫停遊戲";
+            pauseBtn.className = "bg-amber-50 hover:bg-amber-100 text-amber-600 font-extrabold text-xs py-2 px-3 rounded-xl border border-amber-200 transition-all flex items-center gap-1";
+
+            // 重新初始化各項計分與卡片
+            setupGameBoardAndStart();
+            speak('重新開始遊戲');
+        }
+
+        // 切換至首頁設定畫面
+        function backToSetup() {
+            stopTimer();
+            isPaused = false;
+            document.getElementById('win-modal').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-setup').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 核心：組建當前卡牌庫並開啟遊玩
+        function setupGameBoardAndStart() {
+            const sliderValue = parseInt(document.getElementById('difficulty-slider').value);
+            const pairCount = Math.min(selectedSymbols.size, sliderValue);
+
+            flips = 0;
+            matches = 0;
+            gameSeconds = 0;
+            document.getElementById('flips').textContent = flips;
+            document.getElementById('matches').textContent = matches;
+            document.getElementById('total-pairs').textContent = pairCount;
+            document.getElementById('timer-display').textContent = `⏱️ 時間: 0秒`;
+
+            flippedCards = [];
+            lockBoard = false;
+
+            // 從打勾的注音裡隨機挑出指定組數
+            const chosenList = zhuyinDatabase.filter(item => selectedSymbols.has(item.id));
+            shuffle(chosenList);
+            activePairs = chosenList.slice(0, pairCount);
+
+            cards = [];
+            activePairs.forEach(pair => {
+                // 每次啟動與重新開始，均隨機提取其中一個對應的詞彙/Emoji
+                const randomVocabObj = pair.vocabs[Math.floor(Math.random() * pair.vocabs.length)];
+
+                // 注入卡牌陣列
+                cards.push({
+                    id: pair.id,
+                    type: 'symbol',
+                    content: pair.symbol,
+                    speakText: pair.symbol.split(' ')[0],
+                    vocabInfo: randomVocabObj
+                });
+                cards.push({
+                    id: pair.id,
+                    type: 'vocab',
+                    emoji: randomVocabObj.emoji,
+                    content: randomVocabObj.hanzi,
+                    speakText: randomVocabObj.hanzi,
+                    vocabInfo: randomVocabObj
+                });
+            });
+
+            shuffle(cards);
+            renderBoard(pairCount);
+            startTimer();
+        }
+
+        // 開始遊戲（由首頁點擊）
+        function startGame() {
+            initAudio();
+            document.getElementById('win-modal').classList.add('hidden');
+            document.getElementById('confetti-container').innerHTML = '';
+
+            if (selectedSymbols.size < 2) {
+                speak('要多選幾個注音才能玩喔！');
+                return;
+            }
+
+            // 隱藏設定頁，顯示遊戲頁
+            document.getElementById('screen-setup').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            isPaused = false;
+            setupGameBoardAndStart();
+            speak('特訓開始囉！翻頁看一看。');
+        }
+
+        // 渲染卡片介面（支援完美的 X × Y 網格矩形排列）
+        function renderBoard(pairCount) {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+
+            const totalCards = pairCount * 2;
+            const cols = getOptimalColumns(totalCards);
+
+            // 動態設置 CSS Grid 的 columns 數，形成完美對稱的 X×Y 矩形
+            board.style.display = 'grid';
+            board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            
+            // 設定合適的寬度上限，避免在大螢幕下過度拉伸
+            if (totalCards <= 8) {
+                board.className = "grid gap-2.5 max-w-md mx-auto";
+            } else if (totalCards <= 16) {
+                board.className = "grid gap-2.5 max-w-xl mx-auto";
+            } else {
+                board.className = "grid gap-2 max-w-3xl mx-auto";
+            }
+
+            cards.forEach((cardData, idx) => {
+                const card = document.createElement('div');
+                card.className = "card aspect-[1/1.1] relative cursor-pointer preserve-3d transition-transform duration-500 w-full";
+                card.dataset.id = cardData.id;
+                card.dataset.type = cardData.type;
+                card.dataset.index = idx;
+
+                let frontHTML = '';
+                if (cardData.type === 'symbol') {
+                    // 符號卡 (正面)
+                    frontHTML = `
+                        <div class="w-full h-full bg-white border-4 border-pink-400 rounded-2xl flex flex-col justify-center items-center p-1.5 shadow-md">
+                            <span class="text-3xl md:text-4xl font-black text-pink-500">${cardData.content}</span>
+                            <span class="text-[9px] text-pink-300 font-bold mt-0.5">符號</span>
+                        </div>
+                    `;
+                } else {
+                    // 詞彙卡 (正面)：根據 showHanzi 狀態渲染，並移除 truncate 改為自適應折行，確保 【 】 注音完整呈現
+                    if (showHanzi) {
+                        frontHTML = `
+                            <div class="w-full h-full bg-white border-4 border-emerald-400 rounded-2xl flex flex-col justify-center items-center p-2 shadow-md gap-1">
+                                <span class="text-2xl md:text-3xl">${cardData.emoji}</span>
+                                <div class="text-center w-full px-1">
+                                    <span class="text-xs md:text-sm font-black text-slate-800 block line-clamp-1 leading-none mb-1">${cardData.vocabInfo.hanzi}</span>
+                                    <span class="text-[9px] sm:text-[11px] font-bold text-slate-500 block leading-tight whitespace-normal break-words">${cardData.vocabInfo.zhuyin}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        frontHTML = `
+                            <div class="w-full h-full bg-white border-4 border-emerald-400 rounded-2xl flex flex-col justify-center items-center p-2 shadow-md gap-1">
+                                <span class="text-3xl md:text-4xl">${cardData.emoji}</span>
+                                <div class="text-center w-full mb-1 px-1">
+                                    <span class="text-xs sm:text-sm font-black text-slate-800 block leading-tight whitespace-normal break-words">${cardData.vocabInfo.zhuyin}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="card-face card-back absolute inset-0 bg-gradient-to-br from-violet-400 to-indigo-500 border-4 border-white rounded-2xl flex flex-col justify-center items-center shadow-lg backface-hidden">
+                        <span class="text-2xl md:text-3xl text-white font-black">❓</span>
+                    </div>
+                    <div class="card-face card-front absolute inset-0 rotate-y-180 backface-hidden w-full h-full">
+                        ${frontHTML}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => handleCardClick(card, cardData));
+                board.appendChild(card);
+            });
+        }
+
+        // 處理翻牌點擊
+        function handleCardClick(cardElement, cardData) {
+            if (lockBoard || isPaused) return; // 暫停中不可翻牌
+            if (cardElement.classList.contains('card-active')) return;
+
+            playBeep('flip');
+            cardElement.classList.add('card-active');
+            
+            // 語音播放導讀
+            speak(cardData.speakText);
+
+            flippedCards.push({ element: cardElement, data: cardData });
+
+            if (flippedCards.length === 2) {
+                flips++;
+                document.getElementById('flips').textContent = flips;
+                checkMatch();
+            }
+        }
+
+        // 檢查張卡片是否配對
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const isMatch = (card1.data.id === card2.data.id) && (card1.data.type !== card2.data.type);
+
+            if (isMatch) {
+                setTimeout(() => {
+                    playBeep('success');
+                    
+                    // 視覺與排版置中穩定：配對成功後，將卡片內容於正中央完全水平及垂直置中對齊
+                    card1.element.children[1].children[0].className = "w-full h-full bg-emerald-50 border-4 border-emerald-500 rounded-2xl flex flex-col justify-center items-center p-1.5 shadow-lg scale-105 transition-all duration-300 ring-4 ring-emerald-200";
+                    card2.element.children[1].children[0].className = "w-full h-full bg-emerald-50 border-4 border-emerald-500 rounded-2xl flex flex-col justify-center items-center p-2 shadow-lg scale-105 transition-all duration-300 ring-4 ring-emerald-200 gap-1";
+
+                    matches++;
+                    document.getElementById('matches').textContent = matches;
+                    
+                    const matchedVocabObj = card1.data.vocabInfo;
+                    const originalPair = zhuyinDatabase.find(item => item.id === card1.data.id);
+                    
+                    setTimeout(() => {
+                        // 配對成功語音導讀：報出「符號/聲調 ➔ 詞彙」
+                        speak(`${originalPair.symbol.split(' ')[0]}，${matchedVocabObj.hanzi}`);
+                    }, 350);
+
+                    resetTurn();
+                    checkGameOver();
+                }, 500);
+            } else {
+                lockBoard = true;
+                setTimeout(() => {
+                    playBeep('fail');
+                    card1.element.classList.remove('card-active');
+                    card2.element.classList.remove('card-active');
+                    resetTurn();
+                }, 1100);
+            }
+        }
+
+        // 重置選卡回合
+        function resetTurn() {
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        // 提早結束
+        function abortGame() {
+            showEndReport(false);
+        }
+
+        // 檢查是否全通關
+        function checkGameOver() {
+            const targetPairs = parseInt(document.getElementById('total-pairs').textContent);
+            if (matches === targetPairs) {
+                stopTimer();
+                setTimeout(() => {
+                    showEndReport(true);
+                }, 1000);
+            }
+        }
+
+        // 結算報告
+        function showEndReport(isFinishedAll) {
+            stopTimer();
+            const targetPairs = parseInt(document.getElementById('total-pairs').textContent);
+            
+            // 計算翻牌準確度
+            let accuracy = 0;
+            if (flips > 0) {
+                accuracy = Math.round((matches / flips) * 100);
+            }
+
+            let rewardEmoji = "🏆";
+            let rewardTitle = "挑戰成功！";
+            let rewardPhrase = "";
+
+            if (isFinishedAll) {
+                rewardEmoji = "👑";
+                rewardTitle = "哇！你完成了！";
+                
+                if (accuracy >= 80) {
+                    rewardPhrase = "你的眼睛像老鷹一樣亮，專注力超級棒！手眼協調也非常穩定，真是太優秀了！";
+                } else if (accuracy >= 55) {
+                    rewardPhrase = "太厲害了！你記得很清楚喔，大腦的記憶體完全被你啟動了，好棒的表現！";
+                } else {
+                    rewardPhrase = "太棒了！雖然翻了很多次，但你很有耐心、永不放棄地完成了，真是一位努力的注音小勇士！";
+                }
+                playBeep('win');
+                createConfetti();
+            } else {
+                rewardEmoji = "🧸";
+                rewardTitle = "很棒的嘗試喔！";
+                if (matches > 0) {
+                    rewardPhrase = "很好喔！你已經成功配對了一些注音符號，大腦有在持續熱身，下次我們一定可以完成更多！";
+                } else {
+                    rewardPhrase = "沒關係，學習就是一口一口慢慢吃。大腦寶寶準備好了，隨時可以再跟宜禧老師一起玩喔！";
+                }
+                playBeep('flip');
+            }
+
+            // 寫入結算數據
+            document.getElementById('reward-emoji').textContent = rewardEmoji;
+            document.getElementById('reward-title').textContent = rewardTitle;
+            document.getElementById('reward-phrase').textContent = rewardPhrase;
+
+            document.getElementById('stat-score').textContent = `${matches} / ${targetPairs} 對`;
+            document.getElementById('stat-flips').textContent = `${flips} 次`;
+            document.getElementById('stat-time').textContent = `${gameSeconds} 秒`;
+            document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+
+            // 顯示 Modal 彈窗
+            const modal = document.getElementById('win-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // 七彩繽紛紙花粒子特效
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            const colors = ['#ec4899', '#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ff7849'];
+            
+            for (let i = 0; i < 70; i++) {
+                const p = document.createElement('div');
+                p.className = "absolute rounded-full";
+                
+                const size = Math.random() * 8 + 8;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                p.style.left = `${Math.random() * 100}vw`;
+                p.style.top = `-20px`;
+                
+                const speed = Math.random() * 3 + 2.5; 
+                const delay = Math.random() * 1.5;
+                p.style.transition = `transform ${speed}s linear ${delay}s, opacity ${speed}s linear ${delay}s`;
+                
+                container.appendChild(p);
+
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        p.style.transform = `translate(${Math.random() * 120 - 60}px, 105vh) rotate(${Math.random() * 360}deg)`;
+                        p.style.opacity = '0';
+                    }, 50);
+                });
+            }
+        }
+
+        // 網頁開啟初始化
+        window.onload = () => {
+            initSelectionPanels();
+            // 在瀏覽器加載時先行緩存 TTS 語音，確保朗讀語音正常運作
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
+        };
+    </script>
+</body>
+</html>
